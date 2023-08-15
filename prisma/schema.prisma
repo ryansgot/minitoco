@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                          String        @id @default(uuid())
+  /// The user's password hash. Do not store passwords in cleartext.
+  pw_hash                     String
+  /// The user's email address, serves as the username of the user.
+  email                       String        @unique
+  /// The user's first name
+  first_name                  String
+  /// The user's last name
+  last_name                   String
+  /// The date the user was created
+  created_at                  DateTime      @default(now())
+  /// The date the user was last updated
+  updated_at                  DateTime      @updatedAt
+  /// The user's balance--should not be null
+  balance                     Balance?
+  transactions_as_source      Transaction[] @relation("TransactionAsSource")
+  transactions_as_destination Transaction[] @relation("TransactionAsDestination")
+}
+
+/// The balances of each user. In the real world, this would be more complex.
+/// The only reason it's a separate table at all at this point is to enable a
+/// separate user updated_at and balance updated_at
+model Balance {
+  /// The ID user who owns this balance.
+  user_id    String   @id
+  /// The user's present balance. It is an error for this to ever go below 0.
+  value      BigInt
+  /// The date the balance was created
+  created_at DateTime @default(now())
+  /// The date the balance was updated
+  updated_at DateTime @updatedAt
+  /// The user who owns this balance.
+  user       User     @relation(fields: [user_id], references: [id])
+}
+
+model Transaction {
+  /// The ID of the transaction
+  id           String   @id @default(uuid())
+  /// The ID of the source user
+  from_user_id String
+  /// The ID of the destination user
+  to_user_id   String
+  /// The amount of the transaction
+  amount       BigInt
+  /// The date the transaction was created
+  created_at   DateTime @default(now())
+  /// The source user of the transaction
+  from_user    User     @relation(name: "TransactionAsSource", fields: [from_user_id], references: [id])
+  /// The destination user of the transaction
+  to_user      User     @relation(name: "TransactionAsDestination", fields: [to_user_id], references: [id])
+}

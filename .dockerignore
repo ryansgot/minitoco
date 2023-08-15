@@ -1,0 +1,13 @@
+node_modules
+coverage
+npm-debug.log
+Dockerfile
+tsconfig.tsbuildinfo
+docker-compose.yml
+.dockerignore
+.eslintignore
+.eslintrc
+.gitignore
+babel.config.js
+jest.config.js
+README.md

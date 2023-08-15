@@ -1,0 +1,42 @@
+version: "3.9"
+services:
+  minitoco:
+    container_name: minitoco
+    image: fsryan/minitoco
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: development
+    ports:
+      - "3050:3000"
+    volumes:
+      - ./src:/home/node/app/src:ro
+    networks:
+      dev:
+    environment:
+      DB_HOST: minitoco-postgres
+      DATABASE_URL: 'postgresql://user:password@minitoco-postgres:5432/minitoco?schema=public'
+    command: npm run start:dev
+    depends_on:
+      - minitoco-postgres
+  minitoco-postgres:
+    container_name: minitoco-postgres
+    image: postgres:15.2
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5450:5432"
+    volumes:
+      - minitoco-postgres:/var/lib/postgresql/data
+    networks:
+      dev:
+  # TODO minitoco-client
+volumes:
+  minitoco-postgres:
+    name: minitoco-postgres
+networks:
+  dev:
