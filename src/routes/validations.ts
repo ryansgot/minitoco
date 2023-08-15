@@ -12,7 +12,7 @@ const public_key: string = fs.readFileSync(__dirname + "/../../keys/public-key.p
 passport.use(new JwtStrategy(
   {
     secretOrKey: public_key,
-    issuer: 'fsryan/alexiares',
+    issuer: 'fsryan/minitoco',
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
   },
   (jwt_payload: any, done: VerifiedCallback) => {

@@ -180,14 +180,11 @@ const checkValidPasswordInBody = (key: string): ValidationChain => {
  *             $ref: '#/components/schemas/MiniTocoUserToCreate'
  *     responses:
  *       200:
- *         description: The samples that have been set up
+ *         description: The TokenData the client may use to access authenticated API endpoints
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               description: The access token and refresh token so that the user can enjoy the logged-in experience.
- *               items:
- *                 $ref: '#/components/schemas/TokenData'
+ *               $ref: '#/components/schemas/TokenData'
  *       400:
  *         description: invalid input
  *         content:
@@ -258,14 +255,11 @@ user_router.post(
  *               grant_type: password
  *     responses:
  *       200:
- *         description: The samples that have been set up
+ *         description: The token data with the access token the client can use to access the authenticated API endpoints
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               description: The access token and refresh token so that the user can enjoy the logged-in experience.
- *               items:
- *                 $ref: '#/components/schemas/TokenData'
+ *               $ref: '#/components/schemas/TokenData'
  *       400:
  *         description: invalid input
  *         content:
@@ -329,14 +323,11 @@ user_router.post(
  *               grant_type: password
  *     responses:
  *       200:
- *         description: The samples that have been set up
+ *         description: The token data with the access token the client can use to access the authenticated API endpoints
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               description: The access token and refresh token so that the user can enjoy the logged-in experience.
- *               items:
- *                 $ref: '#/components/schemas/TokenData'
+ *               $ref: '#/components/schemas/TokenData'
  *       400:
  *         description: invalid input
  *         content:
@@ -361,9 +352,9 @@ user_router.post(
 user_router.post(
   "/tokenrefresh",
   checkBody("refresh_token")
-    .isEmail(),
+    .notEmpty(),
   checkBody("grant_type")
-    .equals("password"),
+    .equals("refresh_token"),
   (req: Request, res: Response) => {
     const controller: IUserController = standardUserController(req, res);
     controller.refreshToken(() => {
