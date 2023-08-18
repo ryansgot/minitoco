@@ -199,7 +199,7 @@ describe("createTransaction", () => {
             .fromUserId(sender_user_id)
             .toUserId(receiver_user_detail.user.id)
             .id(uuidv4())
-            // .date(new Date()) // TODO: seems like a miss. Probably should return the date of the transaction
+            .date(new Date())
             .build()
         ).finalBalance(BigInt(10))
         .build();

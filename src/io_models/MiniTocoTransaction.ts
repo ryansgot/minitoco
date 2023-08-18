@@ -62,16 +62,18 @@ export class MiniTocoTransaction {
   readonly amount: bigint;
   readonly from_user_id: string;
   readonly to_user_id: string;
+  readonly date: Date;
 
-  static create(id: string, amount: bigint, from_user_id: string, to_user_id: string): MiniTocoTransaction {
-    return new MiniTocoTransaction(id, amount, from_user_id, to_user_id);
+  static create(id: string, amount: bigint, from_user_id: string, to_user_id: string, date: Date): MiniTocoTransaction {
+    return new MiniTocoTransaction(id, amount, from_user_id, to_user_id, date);
   }
 
-  private constructor(id: string, amount: bigint, from_user_id: string, to_user_id: string) {
+  private constructor(id: string, amount: bigint, from_user_id: string, to_user_id: string, date: Date) {
     this.id = id;
     this.amount = amount;
     this.from_user_id = from_user_id;
     this.to_user_id = to_user_id;
+    this.date = date;
   }
 
   toJSON() {
@@ -79,7 +81,8 @@ export class MiniTocoTransaction {
       id: this.id,
       amount: this.amount.toString(), // <-- avoids precision loss on serialization
       from_user_id: this.from_user_id,
-      to_user_id: this.to_user_id
+      to_user_id: this.to_user_id,
+      date: this.date
     };
   }
 
@@ -93,6 +96,7 @@ export class MiniTocoTransactionBuilder {
   private _amount?: bigint;
   private _from_user_id?: string;
   private _to_user_id?: string;
+  private _date?: Date;
 
   static create(from?: MiniTocoTransaction): MiniTocoTransactionBuilder {
     const ret = new MiniTocoTransactionBuilder();
@@ -101,6 +105,7 @@ export class MiniTocoTransactionBuilder {
       ret.amount(from.amount);
       ret.fromUserId(from.from_user_id);
       ret.toUserId(from.to_user_id);
+      ret.date(from.date)
     }
     return ret;
   }
@@ -123,13 +128,18 @@ export class MiniTocoTransactionBuilder {
     this._to_user_id = to_user_id;
     return this;
   }
+  date(date: Date): MiniTocoTransactionBuilder {
+    this._date = date;
+    return this;
+  }
 
   build(): MiniTocoTransaction {
     return MiniTocoTransaction.create(
       getOrThrow(this._id, "id"),
       getOrThrow(this._amount, "amount"),
       getOrThrow(this._from_user_id, "from_user_id"),
-      getOrThrow(this._to_user_id, "to_user_id")
+      getOrThrow(this._to_user_id, "to_user_id"),
+      getOrThrow(this._date, "date")
     );
   }
 }

@@ -64,6 +64,7 @@ class TransactionService implements ITransactionService {
         transaction_builder.fromUserId(from_user_id);
         transaction_builder.toUserId(to_user_id);
         transaction_builder.id(db_transaction.id);
+        transaction_builder.date(db_transaction.created_at);
         const transaction = transaction_builder.build()
 
         const builder = MiniTocoTransactionResultBuilder.create();

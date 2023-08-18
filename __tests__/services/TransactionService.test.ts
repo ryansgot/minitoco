@@ -108,12 +108,13 @@ describe("Transaction Service", () => {
             created_at: new Date()
           });
           const expected_transaction_id = uuidv4();
+          const expected_transaction_date = new Date();
           mock_prisma_context.prisma.transaction.create.mockResolvedValue({
             id: expected_transaction_id,
             amount: input_amount,
             from_user_id: input_from_user_id,
             to_user_id: input_to_user_id,
-            created_at: new Date()
+            created_at: expected_transaction_date
           });
   
           await service_under_test.createTransaction(input_amount, input_from_user_id, input_to_user_id);
@@ -130,6 +131,7 @@ describe("Transaction Service", () => {
                   .fromUserId(input_from_user_id)
                   .toUserId(input_to_user_id)
                   .id(expected_transaction_id)
+                  .date(expected_transaction_date)
                   .build()
               ).build()
           );
