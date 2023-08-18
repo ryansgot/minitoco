@@ -1,14 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
 import { IUserController } from "../../src/controllers/UserController";
-import { MiniTocoUserBuilder, MiniTocoUserDetail, MiniTocoUserDetailBuilder, MiniTocoUserToCreate, MiniTocoUserToCreateBuilder } from "../../src/io_models/MiniTocoUser";
-import { TokenData, TokenDataBuilder } from "../../src/io_models/TokenData";
+import { MiniTocoUserBuilder, MiniTocoUserDetailBuilder } from "../../src/io_models/MiniTocoUser";
+import { TokenDataBuilder } from "../../src/io_models/TokenData";
 import { CreateTokenWithPasswordRequest, CreateTokenWithPasswordRequestBuilder } from "../../src/io_models/CreateTokenRequest";
 import { waitForControllerCompletion } from "../utils/async_utils";
 import { baseUserControllerBuilder } from "../utils/controller_builders";
 import { BasicMockResponse, MockRequestBuilder } from "../utils/express_util";
 import { MockPasswordServiceBuilder, MockTokenServiceBuilder, MockUserServiceBuilder } from "../utils/mock_services";
 import { MiniTocoError, MiniTocoErrorBuilder } from "../../src/io_models/MiniTocoError";
-import { UserAlreadyExistsError, UserEmailNotFoundError } from "../../src/services/IUserService";
+import { UserEmailNotFoundError } from "../../src/services/IUserService";
 import { MiniTocoBalanceBuilder } from "../../src/io_models/MiniTocoBalance";
 
 describe("Log in User", () => {
@@ -39,7 +39,7 @@ describe("Log in User", () => {
         .res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByEmailResponse(new Error("Unexpected error"))
+            .findUserByEmail(new Error("Unexpected error"))
             .build()
         ).build();
 
@@ -61,7 +61,7 @@ describe("Log in User", () => {
         .res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByEmailResponse(new Error("Unexpected error"))
+            .findUserByEmail(new Error("Unexpected error"))
             .build()
         ).build();
 
@@ -83,7 +83,7 @@ describe("Log in User", () => {
         .res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByEmailResponse(new UserEmailNotFoundError(test_log_in_request.username))
+            .findUserByEmail(new UserEmailNotFoundError(test_log_in_request.username))
             .build()
         ).build();
 
@@ -115,7 +115,7 @@ describe("Log in User", () => {
         .res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByEmailResponse(found_user)
+            .findUserByEmail(found_user)
             .build()
         ).passwordService(
           MockPasswordServiceBuilder.create()
@@ -151,7 +151,7 @@ describe("Log in User", () => {
         .res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByEmailResponse(found_user)
+            .findUserByEmail(found_user)
             .build()
         ).passwordService(
           MockPasswordServiceBuilder.create()
@@ -195,7 +195,7 @@ describe("Log in User", () => {
         .res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByEmailResponse(found_user_and_balance)
+            .findUserByEmail(found_user_and_balance)
             .build()
         ).passwordService(
           MockPasswordServiceBuilder.create()
@@ -245,7 +245,7 @@ describe("Log in User", () => {
         .res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByEmailResponse(found_user_and_balance)
+            .findUserByEmail(found_user_and_balance)
             .build()
         ).passwordService(
           MockPasswordServiceBuilder.create()

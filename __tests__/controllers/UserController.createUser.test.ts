@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { IUserController } from "../../src/controllers/UserController";
 import { MiniTocoUserBuilder, MiniTocoUserToCreate, MiniTocoUserToCreateBuilder } from "../../src/io_models/MiniTocoUser";
-import { TokenData, TokenDataBuilder } from "../../src/io_models/TokenData";
+import { TokenDataBuilder } from "../../src/io_models/TokenData";
 import { waitForControllerCompletion } from "../utils/async_utils";
 import { baseUserControllerBuilder } from "../utils/controller_builders";
 import { BasicMockResponse, MockRequestBuilder } from "../utils/express_util";
@@ -60,7 +60,7 @@ describe("Create User", () => {
             .build()
         ).userService(
           MockUserServiceBuilder.create()
-            .createUserResponse(new Error("Unnexpected Error"))
+            .createUser(new Error("Unnexpected Error"))
             .build()
         ).build();
 
@@ -90,7 +90,7 @@ describe("Create User", () => {
             .build()
         ).userService(
           MockUserServiceBuilder.create()
-            .createUserResponse(returned_user)
+            .createUser(returned_user)
             .build()
         ).tokenService(
           MockTokenServiceBuilder.create()
@@ -121,7 +121,7 @@ describe("Create User", () => {
             .build()
         ).userService(
           MockUserServiceBuilder.create()
-            .createUserResponse(new UserAlreadyExistsError(test_user_to_create.email))
+            .createUser(new UserAlreadyExistsError(test_user_to_create.email))
             .build()
         ).build();
 
@@ -144,7 +144,7 @@ describe("Create User", () => {
         .expiresIn(1000)
         .build();
       const returned_user = MockUserServiceBuilder.create()
-        .createUserResponse(
+        .createUser(
           MiniTocoUserBuilder.create()
             .id(uuidv4())
             .email(test_user_to_create.email)

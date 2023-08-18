@@ -42,7 +42,7 @@ describe("Featch User", () => {
         ).res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByIdResponse(new Error("Unexpected error"))
+            .findUserById(new Error("Unexpected error"))
             .build()
         ).build();
 
@@ -102,7 +102,7 @@ describe("Featch User", () => {
         ).res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByIdResponse(new UserIDNotFoundError(user_id))
+            .findUserById(new UserIDNotFoundError(user_id))
             .build()
         ).build();
 
@@ -149,7 +149,7 @@ describe("Featch User", () => {
         ).res(response.createMockResponse())
         .userService(
           MockUserServiceBuilder.create()
-            .findUserByIdResponse(expected)
+            .findUserById(expected)
             .build()
         ).build();
 

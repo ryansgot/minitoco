@@ -67,18 +67,9 @@ class TransactionController extends BaseController implements ITransactionContro
     const res: Response = this.res;
     const req: Request = this.req;
     const requester: RequestAuthUser = this.req.user as RequestAuthUser // <-- validator guarantees this exists.
-    const to_user_email: string = req.body.to_user_email;               // <-- validator guarantees this exists and is an email address.
+    const to_user_email: string = req.body.to_user_email;               // <-- validator guarantees this exists and is an email address that not the email address of the sender.
     const amount_str: string = req.body.amount;                         // <-- validator guarantees this exists and can be converted to bigint
     const amount = BigInt(amount_str);
-
-    if (requester.email === to_user_email) {
-      const error_to_return = MiniTocoErrorBuilder.ofBody("to_user_email")
-        .msg("cannot send to self")
-        .value(to_user_email)
-        .build();
-      sendAndSignal(res, 400, MiniTocoError.errorsBody(error_to_return), signalComplete);
-      return;
-    }
 
     let to_user: MiniTocoUserDetail;
     try {
@@ -89,7 +80,7 @@ class TransactionController extends BaseController implements ITransactionContro
           .msg("to-user not found")
           .value(to_user_email)
           .build();
-        sendAndSignal(res, 400, MiniTocoError.errorsBody(error_to_return), signalComplete);
+        sendAndSignal(res, 404, MiniTocoError.errorsBody(error_to_return), signalComplete);
         return;
       }
 
@@ -110,10 +101,19 @@ class TransactionController extends BaseController implements ITransactionContro
         sendAndSignal(res, 409, MiniTocoError.errorsBody(error_to_return), signalComplete);
         return;
       }
-      if (error instanceof UserIDNotFoundError) {
-        // this should not happen, but we should log the error to some monitoring tool
-      }
+
+      // We don't expect to ever get to this point and experience an error in
+      // which the user is not found. Thus, we log that error, but return the
+      // friendlier 404 error.
       logTransactionEndpointError("createTransaction", error as Error);
+      if (error instanceof UserIDNotFoundError) {
+        const error_to_return = MiniTocoErrorBuilder.ofBody("to_user_email")
+          .msg("User not found")
+          .value(error.user_id)
+          .build();
+        sendAndSignal(res, 404, MiniTocoError.errorsBody(error_to_return), signalComplete);
+        return;
+      }
       sendAndSignalInternalServerError(res, signalComplete);
     }
   }

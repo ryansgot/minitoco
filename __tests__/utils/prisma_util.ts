@@ -37,3 +37,10 @@ export const createForeignKeyConstraintError = (field_name: string, client_versi
     clientVersion: client_version
   }
 )
+
+export const createUnknownRequestError = (message: string, client_version: string = "5.1.1"): Prisma.PrismaClientUnknownRequestError => new Prisma.PrismaClientUnknownRequestError(
+  message,
+  {
+    clientVersion: client_version
+  }
+)

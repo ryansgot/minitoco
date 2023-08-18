@@ -5,6 +5,7 @@ import { body as checkBody, query as checkQuery, param as checkParam } from "exp
 import { default_prisma_context } from "../prisma/PrismaDb";
 import { ITransactionController, TransactionControllerBuilder } from "../controllers/TransactionController";
 import { createTransactionService } from "../services/TransactionService";
+import { RequestAuthUser } from "../io_models/RequestAuthUser";
 
 export const transaction_router: Router = express.Router();
 
@@ -113,7 +114,12 @@ transaction_router.post(
   fsRyanAuthenticate, // <-- ensures user logged-in.
   checkBody("to_user_email")
     .isEmail()
-    .withMessage("to_user_email must be a valid email address"),
+    .withMessage("to_user_email must be a valid email address")
+    .custom((value: string, { req }) => {
+      // fsRyanAuthenticate above ensures that the RequestAuthUser will be present.
+      const requester_email = (req.user as RequestAuthUser).email;
+      return requester_email !== value;
+    }).withMessage("cannot send to self"),
   checkBody("amount")
     .custom((value: string) => {
       try {

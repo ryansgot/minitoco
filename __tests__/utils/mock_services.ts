@@ -3,6 +3,8 @@ import { IUserService } from '../../src/services/IUserService';
 import { ITokenService } from '../../src/services/ITokenService';
 import { IPasswordService } from '../../src/services/IPasswordService';
 import { TokenData } from '../../src/io_models/TokenData';
+import { MiniTocoTransactionResult } from '../../src/io_models/MiniTocoTransaction';
+import { ITransactionService } from '../../src/services/ITransactionService';
 
 export class MockUserServiceBuilder {
 
@@ -16,15 +18,15 @@ export class MockUserServiceBuilder {
 
   private constructor() {}
   
-  createUserResponse(create_user_response: MiniTocoUser | Error): MockUserServiceBuilder {
+  createUser(create_user_response: MiniTocoUser | Error): MockUserServiceBuilder {
     this.create_user_response = create_user_response;
     return this;
   }
-  findUserByEmailResponse(find_user_by_email_response: MiniTocoUserDetail | Error): MockUserServiceBuilder {
+  findUserByEmail(find_user_by_email_response: MiniTocoUserDetail | Error): MockUserServiceBuilder {
     this.find_user_by_email_response = find_user_by_email_response;
     return this;
   }
-  findUserByIdResponse(find_user_by_id_response: MiniTocoUserDetail | Error): MockUserServiceBuilder {
+  findUserById(find_user_by_id_response: MiniTocoUserDetail | Error): MockUserServiceBuilder {
     this.find_user_by_id_response = find_user_by_id_response;
     return this;
   }
@@ -136,3 +138,30 @@ export class MockPasswordServiceBuilder {
       }
 }
 
+export class MockTransactionServiceBuilder {
+      
+  private create_transaction_response: MiniTocoTransactionResult | Error;
+
+  static create(): MockTransactionServiceBuilder {
+    return new MockTransactionServiceBuilder();
+  }
+
+  private constructor() {}
+  
+  createTransaction(create_transaction_response: MiniTocoTransactionResult | Error): MockTransactionServiceBuilder {
+    this.create_transaction_response = create_transaction_response;
+    return this;
+  }
+  
+  build(): ITransactionService {
+    const create_transaction_mock = jest.fn();
+    return <ITransactionService> {
+      create_transaction_mock: create_transaction_mock,
+      createTransaction: this.create_transaction_response === undefined
+        ? create_transaction_mock.mockRejectedValue(new Error("createTransaction not mocked"))
+        : this.create_transaction_response instanceof Error
+        ? create_transaction_mock.mockRejectedValue(this.create_transaction_response)
+        : create_transaction_mock.mockResolvedValue(this.create_transaction_response)
+    };
+  }
+}
