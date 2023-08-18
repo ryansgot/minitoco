@@ -17,7 +17,7 @@ services:
     environment:
       DB_HOST: minitoco-postgres
       DATABASE_URL: 'postgresql://user:password@minitoco-postgres:5432/minitoco?schema=public'
-    command: npm run start:dev
+    command: npm run startmigrate:dev
     depends_on:
       - minitoco-postgres
   minitoco-postgres:
