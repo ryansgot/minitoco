@@ -7,8 +7,16 @@ import { MiniTocoError, MiniTocoErrorBuilder } from "../io_models/MiniTocoError"
 import { RequestAuthUser } from "../io_models/RequestAuthUser";
 import { ITokenService } from "../services/ITokenService";
 import { IPasswordService } from "../services/IPasswordService";
-import { MiniTocoUser, MiniTocoUserToCreateBuilder } from "../io_models/MiniTocoUser";
+import { MiniTocoUser, MiniTocoUserDetail, MiniTocoUserToCreateBuilder } from "../io_models/MiniTocoUser";
 import { CreateTokenWithPasswordRequestBuilder, CreateTokenWithRefreshTokenRequest, CreateTokenWithRefreshTokenRequestBuilder } from "../io_models/CreateTokenRequest";
+
+
+export interface IUserController extends IBaseController {
+  createUser(signalComplete: () => void): void;
+  logInUser(signalComplete: () => void): void;
+  refreshToken(signalComplete: () => void): void;
+  fetchUser(signalComplete: () => void): void;
+}
 
 export class UserControllerBuilder extends BaseControllerBuilder<IUserController, UserControllerBuilder> {
 
@@ -51,13 +59,6 @@ export class UserControllerBuilder extends BaseControllerBuilder<IUserController
     );
   }
 }
-
-export interface IUserController extends IBaseController {
-  createUser(signalComplete: () => void): void;
-  logInUser(signalComplete: () => void): void;
-  refreshToken(signalComplete: () => void): void;
-}
-
 class UserController extends BaseController implements IUserController {
 
   private user_service: IUserService;
@@ -137,9 +138,9 @@ class UserController extends BaseController implements IUserController {
 
     const create_token_request = CreateTokenWithPasswordRequestBuilder.create(req.body).build();  // <-- validator guarantees valid
   
-    let user: MiniTocoUser;
+    let user_detail: MiniTocoUserDetail;
     try {
-      user = await this.user_service.findUserByEmail(create_token_request.username);
+      user_detail = await this.user_service.findUserByEmail(create_token_request.username);
     } catch (error) {
       if (error instanceof UserEmailNotFoundError) {
         const error_to_return = MiniTocoErrorBuilder.ofBody("email or password")
@@ -156,7 +157,7 @@ class UserController extends BaseController implements IUserController {
     }
 
     try {
-      const is_password_match = await this.password_service.isPasswordMatch(create_token_request.password, user.pw_hash);
+      const is_password_match = await this.password_service.isPasswordMatch(create_token_request.password, user_detail.user.pw_hash);
       if (!is_password_match) {
         const error_to_return = MiniTocoErrorBuilder.ofBody("email or password")
           .msg("email or password incorrect")
@@ -176,7 +177,7 @@ class UserController extends BaseController implements IUserController {
     }
 
     try {
-      const token_data = await this.token_service.createTokenData(user.id, user.email);
+      const token_data = await this.token_service.createTokenData(user_detail.user.id, user_detail.user.email);
       sendAndSignal(res, 200, token_data, signalComplete);
     } catch (error) {
       logUserEndpointError("logInUser", error as Error);
@@ -192,8 +193,6 @@ class UserController extends BaseController implements IUserController {
 
     const res: Response = this.res;
     const req: Request = this.req;
-    // const request_user: RequestAuthUser = this.req.user as RequestAuthUser // <-- validator guarantees this exists.
-    // const auth_header = req.header('Authorization') as string;
 
     if (req.body.grant_type !== "refresh_token") {
       const error_to_return = MiniTocoErrorBuilder.ofBody("grant_type")
@@ -221,9 +220,9 @@ class UserController extends BaseController implements IUserController {
       return;
     }
 
-    let user: MiniTocoUser;
+    let user_detail: MiniTocoUserDetail;
     try {
-      user = await this.user_service.findUserById(user_in_token.user_id);
+      user_detail = await this.user_service.findUserById(user_in_token.user_id);
     } catch (error) {
       if (error instanceof UserIDNotFoundError) {
         const error_to_return = MiniTocoErrorBuilder.ofBody("refresh_token")
@@ -240,10 +239,48 @@ class UserController extends BaseController implements IUserController {
     }
 
     try {
-      const token_data = await this.token_service.createTokenData(user.id, user.email);
+      const token_data = await this.token_service.createTokenData(user_detail.user.id, user_detail.user.email);
       sendAndSignal(res, 200, token_data, signalComplete);
     } catch (error) {
       logUserEndpointError("logInUser", error as Error);
+      sendAndSignalInternalServerError(res, signalComplete);
+    }
+  }
+  
+  async fetchUser(signalComplete: () => void): Promise<void> {
+    if (this.validationFailureWasSent(signalComplete)) {
+      return;
+    }
+
+    const res: Response = this.res;
+    const req: Request = this.req;
+    const request_user: RequestAuthUser = req.user as RequestAuthUser // <-- validator guarantees this exists.
+    const requested_user_id: string = req.params.user_id;             // <-- validator guarantees this exists and is a uuid
+
+    if (request_user.id !== requested_user_id) {
+      const error_to_return = MiniTocoErrorBuilder.ofPath("user_id")
+        .msg("Only the currently-logged in user can fetch their own user details")
+        .value(requested_user_id)
+        .build();
+      sendAndSignal(res, 403, MiniTocoError.errorsBody(error_to_return), signalComplete);
+      return;
+    }
+
+    try {
+      const user_detail = await this.user_service.findUserById(requested_user_id);
+      sendAndSignal(res, 200, user_detail, signalComplete);
+    } catch (error) {
+      if (error instanceof UserIDNotFoundError) {
+        // This should not be possible because we know at this point that the
+        // logged in user is the requested user.
+        const error_to_return = MiniTocoErrorBuilder.ofPath("user_id")
+          .msg("User not found")
+          .value(requested_user_id)
+          .build();
+        sendAndSignal(res, 404, MiniTocoError.errorsBody(error_to_return), signalComplete);
+        return;
+      }
+      logUserEndpointError("fetchUser", error as Error);
       sendAndSignalInternalServerError(res, signalComplete);
     }
   }

@@ -1,4 +1,4 @@
-import { MiniTocoUser, MiniTocoUserToCreate } from '../io_models/MiniTocoUser';
+import { MiniTocoUser, MiniTocoUserDetail, MiniTocoUserToCreate } from '../io_models/MiniTocoUser';
 
 export interface IUserService {
   /**
@@ -14,13 +14,13 @@ export interface IUserService {
    * Finds a user by the email passed in
    * @param email The email of the user to find.
    */
-  findUserByEmail(email: string): Promise<MiniTocoUser>
+  findUserByEmail(email: string): Promise<MiniTocoUserDetail>
 
   /**
    * Finds a user by the ID passed in
    * @param email The email of the user to find.
    */
-  findUserById(user_id: string): Promise<MiniTocoUser>
+  findUserById(user_id: string): Promise<MiniTocoUserDetail>
 }
 
 // Add error classes below

@@ -6,7 +6,6 @@ import { createTokenService } from "../services/JWTTokenService";
 import { fsRyanAuthenticate } from "./validations";
 import { body as checkBody, query as checkQuery, param as checkParam, ValidationChain } from "express-validator";
 import { default_prisma_context } from "../prisma/PrismaDb";
-import { IUserService } from "../services/IUserService";
 
 export const user_router: Router = express.Router();
 // Enables parsing of application/x-www-form-urlencoded requests
@@ -155,6 +154,31 @@ const checkValidPasswordInBody = (key: string): ValidationChain => {
  *         first_name: 'Test'
  *         last_name: 'User'
  *         password: 'P@ssword1'
+ *     MiniTocoUserDetail:
+ *       type: object
+ *       required:
+ *        - user
+ *        - balance
+ *       properties:
+ *         user:
+ *           $ref: '#/components/schemas/MiniTocoUser'
+ *         balance:
+ *           $ref: '#/components/schemas/MiniTocoBalance'
+ *     MiniTocoBalance:
+ *       type: object
+ *       required:
+ *        - value
+ *        - updated_at
+ *       properties:
+ *         value:
+ *           type: string
+ *           description: The account balance as a string to avoid precision loss
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *       example:
+ *         value: '1000'
+ *         updated_at: '2020-01-01T00:00:00.000Z'
  */
 
 /**
@@ -359,6 +383,74 @@ user_router.post(
     const controller: IUserController = standardUserController(req, res);
     controller.refreshToken(() => {
       console.log(`[POST:/users/tokenrefresh]: COMPLETE`);
+    });
+  }
+)
+
+/**
+ * @swagger
+ * /users/{user_id}:
+ *   get:
+ *     tags: [Users]
+ *     summary: Refreshes the user's access token, returning a new TokenData
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         description: The ID of the user for which you wish to retrieve the user details.
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: The most up-to-date details about the user.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MiniTocoUserDetail'
+ *       400:
+ *         description: invalid input (the user_id must be a uuid)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MiniTocoErrors'
+ *       401:
+ *         description: You need to log in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - errors
+ *               properties:
+ *                 errors:
+ *                   description: the array of errors that were encountered
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MiniTocoErrors'
+ *       403:
+ *         description: You are not authorized to access the details of the requested user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - errors
+ *               properties:
+ *                 errors:
+ *                   description: the array of errors that were encountered
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MiniTocoErrors'
+ */
+user_router.get(
+  "/:user_id",
+  fsRyanAuthenticate,
+  checkParam("user_id")
+    .isUUID(),
+  (req: Request, res: Response) => {
+    const controller: IUserController = standardUserController(req, res);
+    controller.fetchUser(() => {
+      console.log(`[GET:/users/${req.params.user_id}]: COMPLETE`);
     });
   }
 )

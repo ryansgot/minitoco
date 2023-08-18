@@ -1,17 +1,16 @@
 import { getOrThrow } from "../utils/ts_util"
+import { MiniTocoBalance, MiniTocoBalanceBuilder } from "./MiniTocoBalance";
 
+/**
+ * The model the client sends to create a user.
+ */
 export class MiniTocoUserToCreate {
   readonly email: string;
   readonly first_name: string;
   readonly last_name: string;
   readonly password: string
 
-  static create(
-    email: string,
-    first_name: string,
-    last_name: string,
-    password: string
-  ): MiniTocoUserToCreate {
+  static create(email: string, first_name: string, last_name: string, password: string): MiniTocoUserToCreate {
     return new MiniTocoUserToCreate(email, first_name, last_name, password);
   }
 
@@ -71,6 +70,56 @@ export class MiniTocoUserToCreateBuilder {
       getOrThrow(this._last_name, "last_name"),
       getOrThrow(this._password, "password")
     );
+  }
+}
+
+/**
+ * Returns the details of a mini toco user (the user and the balance).
+ */
+export class MiniTocoUserDetail {
+  readonly user: MiniTocoUser;
+  readonly balance: MiniTocoBalance;
+
+  static create(user: MiniTocoUser, balance: MiniTocoBalance): MiniTocoUserDetail {
+    return new MiniTocoUserDetail(user, balance);
+  }
+
+  private constructor(user: MiniTocoUser, balance: MiniTocoBalance) {
+    this.user = user;
+    this.balance = balance;
+  }
+
+  newBuilder(): MiniTocoUserDetailBuilder {
+    return MiniTocoUserDetailBuilder.create(this);
+  }
+}
+
+export class MiniTocoUserDetailBuilder {
+  private _user?: MiniTocoUser;
+  private _balance?: MiniTocoBalance;
+
+  static create(from?: MiniTocoUserDetail): MiniTocoUserDetailBuilder {
+    const ret = new MiniTocoUserDetailBuilder();
+    if (from) {
+      ret.user(MiniTocoUserBuilder.create(from.user).build())
+      ret.balance(MiniTocoBalanceBuilder.create(from.balance).build())
+    }
+    return ret;
+  }
+
+  private constructor() {}
+
+  user(user: MiniTocoUser): MiniTocoUserDetailBuilder {
+    this._user = user;
+    return this;
+  }
+  balance(balance: MiniTocoBalance): MiniTocoUserDetailBuilder {
+    this._balance = balance;
+    return this;
+  }
+
+  build(): MiniTocoUserDetail {
+    return MiniTocoUserDetail.create(getOrThrow(this._user, "user"), getOrThrow(this._balance, "balance"));
   }
 }
 

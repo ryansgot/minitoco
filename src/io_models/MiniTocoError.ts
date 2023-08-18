@@ -91,6 +91,10 @@ export class MiniTocoErrorBuilder {
     return MiniTocoErrorBuilder.create().location("header").param(header_name);
   }
 
+  static ofPath(path_param: string): MiniTocoErrorBuilder {
+    return MiniTocoErrorBuilder.create().location("path").param(path_param);
+  }
+
   private constructor() { }
 
   value(value: string): MiniTocoErrorBuilder {

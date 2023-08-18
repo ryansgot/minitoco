@@ -2,7 +2,8 @@ import { v4 as uuidv4 } from "uuid";
 import { MockPrismaContext, createMockPrismaContext, createUniqueConstraintError } from "../utils/prisma_util";
 import { IUserService, UserAlreadyExistsError, UserEmailNotFoundError, UserIDNotFoundError } from "../../src/services/IUserService";
 import { createUserService } from "../../src/services/UserService";
-import { MiniTocoUser, MiniTocoUserBuilder, MiniTocoUserToCreateBuilder } from "../../src/io_models/MiniTocoUser";
+import { MiniTocoUser, MiniTocoUserBuilder, MiniTocoUserDetailBuilder, MiniTocoUserToCreateBuilder } from "../../src/io_models/MiniTocoUser";
+import { MiniTocoBalance, MiniTocoBalanceBuilder } from "../../src/io_models/MiniTocoBalance";
 
 describe("User Service", () => {
 
@@ -89,12 +90,32 @@ describe("User Service", () => {
           .lastName("Last")
           .pwHash("password hash")
           .build();
-        // This works because the User object conforms to to the database user interface
-        mock_prisma_context.prisma.user.findUnique.mockResolvedValue(expected_user);
+        const expected_balance = MiniTocoBalanceBuilder.create()
+          .value(BigInt(1))
+          .updatedAt(new Date())
+          .build();
+        const expected = MiniTocoUserDetailBuilder.create()
+          .balance(expected_balance)
+          .user(expected_user)
+          .build();
+        mock_prisma_context.prisma.user.findUnique.mockResolvedValue({
+          id: expected_user.id,
+          created_at: expected_user.created_at,
+          updated_at: expected_user.updated_at,
+          email: expected_user.email,
+          first_name: expected_user.first_name,
+          last_name: expected_user.last_name,
+          pw_hash: expected_user.pw_hash,
+          balance: {
+            value: expected_balance.value.toString(),
+            updated_at: expected_balance.updated_at,
+            created_at: new Date()  // <-- this does not matter in the eventual result
+          }
+        });
 
-        const actual_user = await service_under_test.findUserByEmail(test_email);
+        const actual = await service_under_test.findUserByEmail(test_email);
 
-        expect(actual_user).toEqual(expected_user);
+        expect(actual).toEqual(expected);
       });
     });
   });
@@ -127,12 +148,32 @@ describe("User Service", () => {
           .lastName("Last")
           .pwHash("password hash")
           .build();
-        // This works because the User object conforms to to the database user interface
-        mock_prisma_context.prisma.user.findUnique.mockResolvedValue(expected_user);
+        const expected_balance = MiniTocoBalanceBuilder.create()
+          .value(BigInt(1))
+          .updatedAt(new Date())
+          .build();
+        const expected = MiniTocoUserDetailBuilder.create()
+          .balance(expected_balance)
+          .user(expected_user)
+          .build();
+          mock_prisma_context.prisma.user.findUnique.mockResolvedValue({
+            id: expected_user.id,
+            created_at: expected_user.created_at,
+            updated_at: expected_user.updated_at,
+            email: expected_user.email,
+            first_name: expected_user.first_name,
+            last_name: expected_user.last_name,
+            pw_hash: expected_user.pw_hash,
+            balance: {
+              value: expected_balance.value.toString(),
+              updated_at: expected_balance.updated_at,
+              created_at: new Date()  // <-- this does not matter in the eventual result
+            }
+          });
 
-        const actual_user = await service_under_test.findUserById(input_user_id);
+        const actual = await service_under_test.findUserById(input_user_id);
 
-        expect(actual_user).toEqual(expected_user);
+        expect(actual).toEqual(expected);
       });
     });
   });

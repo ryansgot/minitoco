@@ -1,4 +1,5 @@
-import { MiniTocoUser, MiniTocoUserBuilder, MiniTocoUserToCreate } from '../io_models/MiniTocoUser';
+import { MiniTocoBalanceBuilder } from '../io_models/MiniTocoBalance';
+import { MiniTocoUser, MiniTocoUserBuilder, MiniTocoUserDetail, MiniTocoUserDetailBuilder, MiniTocoUserToCreate } from '../io_models/MiniTocoUser';
 import { PrismaContext } from '../prisma/PrismaDb';
 import { isPrismaUniqueConstraintError } from '../prisma/prisma_util';
 import { IUserService, UserAlreadyExistsError, UserEmailNotFoundError, UserIDNotFoundError } from './IUserService';
@@ -58,27 +59,40 @@ class UserService implements IUserService {
   }
 
 
-  async findUserByEmail(email: string): Promise<MiniTocoUser> {
+  async findUserByEmail(email: string): Promise<MiniTocoUserDetail> {
     logUserService("findUserByEmail", "Finding user by email", email);
 
     try {
-      const user = await this.prisma_context.prisma.user.findUnique({
+      const user_and_balance = await this.prisma_context.prisma.user.findUnique({
         where: {
           email: email
+        },
+        include: {
+          balance: true
         }
       });
-      if (user === null) {
+      if (user_and_balance === null) {
         throw new UserEmailNotFoundError(email);
       }
   
-      const builder = MiniTocoUserBuilder.create();
-      builder.id(user.id);
-      builder.email(user.email);
-      builder.firstName(user.first_name);
-      builder.lastName(user.last_name);
-      builder.pwHash(user.pw_hash);
-      builder.createdAt(user.created_at);
-      builder.updatedAt(user.updated_at);
+      const balance_builder = MiniTocoBalanceBuilder.create();
+      balance_builder.updatedAt(user_and_balance.balance!.updated_at)
+      balance_builder.value(BigInt(user_and_balance.balance!.value));
+      const balance = balance_builder.build();
+
+      const user_builder = MiniTocoUserBuilder.create();
+      user_builder.id(user_and_balance.id);
+      user_builder.email(user_and_balance.email);
+      user_builder.firstName(user_and_balance.first_name);
+      user_builder.lastName(user_and_balance.last_name);
+      user_builder.pwHash(user_and_balance.pw_hash);
+      user_builder.createdAt(user_and_balance.created_at);
+      user_builder.updatedAt(user_and_balance.updated_at);
+      const user = user_builder.build();
+
+      const builder = MiniTocoUserDetailBuilder.create();
+      builder.balance(balance);
+      builder.user(user);
       const ret = builder.build();
       return ret;
     } catch (error) {
@@ -88,27 +102,41 @@ class UserService implements IUserService {
     }
   }
 
-  async findUserById(user_id: string): Promise<MiniTocoUser> {
+  async findUserById(user_id: string): Promise<MiniTocoUserDetail> {
     logUserService("findUserById", "Finding user by id", user_id);
 
     try {
-      const user = await this.prisma_context.prisma.user.findUnique({
+      const user_and_balance = await this.prisma_context.prisma.user.findUnique({
         where: {
           id: user_id
+        },
+        include: {
+          balance: true
         }
       });
-      if (user === null) {
+      if (user_and_balance === null) {
         throw new UserIDNotFoundError(user_id);
       }
   
-      const builder = MiniTocoUserBuilder.create();
-      builder.id(user.id);
-      builder.email(user.email);
-      builder.firstName(user.first_name);
-      builder.lastName(user.last_name);
-      builder.pwHash(user.pw_hash);
-      builder.createdAt(user.created_at);
-      builder.updatedAt(user.updated_at);
+
+      const balance_builder = MiniTocoBalanceBuilder.create();
+      balance_builder.updatedAt(user_and_balance.balance!.updated_at)
+      balance_builder.value(BigInt(user_and_balance.balance!.value));
+      const balance = balance_builder.build();
+
+      const user_builder = MiniTocoUserBuilder.create();
+      user_builder.id(user_and_balance.id);
+      user_builder.email(user_and_balance.email);
+      user_builder.firstName(user_and_balance.first_name);
+      user_builder.lastName(user_and_balance.last_name);
+      user_builder.pwHash(user_and_balance.pw_hash);
+      user_builder.createdAt(user_and_balance.created_at);
+      user_builder.updatedAt(user_and_balance.updated_at);
+      const user = user_builder.build();
+
+      const builder = MiniTocoUserDetailBuilder.create();
+      builder.balance(balance);
+      builder.user(user);
       const ret = builder.build();
       return ret;
     } catch (error) {

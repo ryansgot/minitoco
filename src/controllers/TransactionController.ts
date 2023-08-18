@@ -6,7 +6,7 @@ import { sendAndSignal, sendAndSignalInternalServerError } from "../utils/expres
 import { MiniTocoError, MiniTocoErrorBuilder } from "../io_models/MiniTocoError";
 import { RequestAuthUser } from "../io_models/RequestAuthUser";
 import { IUserService, UserEmailNotFoundError, UserIDNotFoundError } from "../services/IUserService";
-import { MiniTocoUser } from "../io_models/MiniTocoUser";
+import { MiniTocoUser, MiniTocoUserDetail } from "../io_models/MiniTocoUser";
 
 export class TransactionControllerBuilder extends BaseControllerBuilder<ITransactionController, TransactionControllerBuilder> {
 
@@ -80,7 +80,7 @@ class TransactionController extends BaseController implements ITransactionContro
       return;
     }
 
-    let to_user: MiniTocoUser;
+    let to_user: MiniTocoUserDetail;
     try {
       to_user = await this.user_service.findUserByEmail(to_user_email);
     } catch (error) {
@@ -99,7 +99,7 @@ class TransactionController extends BaseController implements ITransactionContro
     }
 
     try {
-      const transaction_result = await this.transaction_service.createTransaction(amount, requester.id, to_user.id);
+      const transaction_result = await this.transaction_service.createTransaction(amount, requester.id, to_user.user.id);
       sendAndSignal(res, 200, transaction_result, signalComplete);
     } catch (error) {
       if (error instanceof TransactionInsufficientFundsError) {

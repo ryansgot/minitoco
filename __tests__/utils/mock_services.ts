@@ -1,4 +1,4 @@
-import { MiniTocoUser } from '../../src/io_models/MiniTocoUser';
+import { MiniTocoUser, MiniTocoUserDetail } from '../../src/io_models/MiniTocoUser';
 import { IUserService } from '../../src/services/IUserService';
 import { ITokenService } from '../../src/services/ITokenService';
 import { IPasswordService } from '../../src/services/IPasswordService';
@@ -7,8 +7,8 @@ import { TokenData } from '../../src/io_models/TokenData';
 export class MockUserServiceBuilder {
 
   private create_user_response: MiniTocoUser| Error;
-  private find_user_by_email_response: MiniTocoUser| Error;
-  private find_user_by_id_response: MiniTocoUser| Error;
+  private find_user_by_email_response: MiniTocoUserDetail| Error;
+  private find_user_by_id_response: MiniTocoUserDetail| Error;
 
   static create(): MockUserServiceBuilder {
     return new MockUserServiceBuilder();
@@ -20,11 +20,11 @@ export class MockUserServiceBuilder {
     this.create_user_response = create_user_response;
     return this;
   }
-  findUserByEmailResponse(find_user_by_email_response: MiniTocoUser | Error): MockUserServiceBuilder {
+  findUserByEmailResponse(find_user_by_email_response: MiniTocoUserDetail | Error): MockUserServiceBuilder {
     this.find_user_by_email_response = find_user_by_email_response;
     return this;
   }
-  findUserByIdResponse(find_user_by_id_response: MiniTocoUser | Error): MockUserServiceBuilder {
+  findUserByIdResponse(find_user_by_id_response: MiniTocoUserDetail | Error): MockUserServiceBuilder {
     this.find_user_by_id_response = find_user_by_id_response;
     return this;
   }
