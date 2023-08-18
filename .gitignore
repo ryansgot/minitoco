@@ -1,13 +1,12 @@
-node_modules
-build
-npm-debug.log
-.nyc
+**/node_modules
+**/build
+**/npm-debug.log
+**/.nyc
 **/*.env*
-.DS_Store
-coverage/*
-tsconfig.tsbuildinfo
-.teamcity/.idea
+**/.DS_Store
+**/coverage/*
+**/tsconfig.tsbuildinfo
 
 # do not store keys in source control
-keys/*
+server/keys/*
 

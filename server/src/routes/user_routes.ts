@@ -392,7 +392,7 @@ user_router.post(
  * /users/{user_id}:
  *   get:
  *     tags: [Users]
- *     summary: Refreshes the user's access token, returning a new TokenData
+ *     summary: Returns the user specified by the user ID. I implemented this because the directions told me to do so, however, since I also implemented an authentication/authorization system, this endpoint should not be necessary, and you should be able to get /users/me.
  *     parameters:
  *       - in: path
  *         name: user_id

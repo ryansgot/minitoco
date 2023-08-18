@@ -16,7 +16,7 @@ The following process takes a few minutes--especially on an older device. Homebr
     openssl genrsa -out keys/private-key.pem 3072
     openssl rsa -in keys/private-key.pem -pubout -out keys/public-key.pem
     ```
-    These keys are used by the service to generate a 
+    These keys are used by the service to generate a JWT used for authentication/authorization 
 2. Configure your .env
     ```bash
     echo 'NODE_ENV=development' >> .env.local
