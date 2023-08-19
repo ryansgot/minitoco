@@ -6,6 +6,9 @@ Explain your service here.
 
 Currently, I only have instructions for Mac OSX. If you want instructions for linux, it should be pretty easy as well. Instead of colima, use minikube. Instead of brew, use whatever package manager you use. On Windows, you should use Docker Desktop and follow Docker's instructions.
 
+> *Note*:
+> You DO NOT need to have npm installed to RUN the server. All the necessary NPM functions to run the service are handled in docker container, startup scripts, etc. This includes the database migration. I did this for people who just want to run the server--not develop it. In a real project, I would not run `npx prisma migrate dev` on every app invocation, however, since you'll just be running the server, I optimized for your usecase.
+
 ## Mac OSX
 The following process takes a few minutes--especially on an older device. Homebrew is required for these instructions to work. If you don't have homebrew, install that first.
 
@@ -51,16 +54,9 @@ The following process takes a few minutes--especially on an older device. Homebr
     # After this, you will have a daemon up and running that will be able to run
     # the app and mount the volumes.
     ```
-4. Fill out the [prisma schema](prisma/schema.prisma)
-5. Fill out the DB [seed file](prisma/seed.ts)
-6. Run Docker Compose in dev environment
+4. Run Docker Compose in dev environment
     ```bash
     docker-compose up
-    ```
-7. Migrate and seed the database
-    ```bash
-    npx prisma migrate dev
-    npx prisma db seed
     ```
 You should now have the minitoco service running at localhost:3050. If you don't want to block your terminal, use the `-d` option. However, I like to block that terminal window and run another terminal.
 
@@ -72,21 +68,15 @@ The docker container runs nodemon in the development environment that monitors a
 
 npm run test:unit
 
+This runs the unit tests and outputs a coverage report.
+
 # Manual Testing
 
-This section supposes that you have followed the development setup steps. Testing manually is key to understanding how the auth service works. You can test manually via http://localhost:3050/docs
+This section supposes that you have followed the development setup steps. Testing manually is key to understanding how the auth service works. You can test manually via the swagger documentation at http://localhost:3050/docs.
 
 # Database
 
 The database we're using is Postgres. We connect to the database using the pg package. Our tool of choice is [Prisma](https://www.prisma.io) as an ORM for this project.
-
-## Running a migration
-
-`npx prisma migrate dev`
-
-## Seeding the database  (optional--depends upon if your project needs to seed the database)
-
-`npx prisma db seed`
 
 ## Tools
 
@@ -112,11 +102,11 @@ We use the dotenv npm package for reading our environment variables.
 
 As is the case with many projects, you have to make assumptions and pick a direction to start moving. The following assumptions were made:
 
-### The minimal unit of a toco is 0.0001
+### The minimal unit of a toco is 0.0001 (a minitoco)
 
 Why did I choose this? I looked at total number of dollars in circulation. As of Dec. 2022, it was $2.3 trillion. The BIGINT data type in postgress stores this range: -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807, and thus, is sufficient for most transactions we might do. I wanted to choose a type with a width that was big enough to store a reasonable amount of toco as an integer so that the database could do math without having to use string and then deserialize to a Big and write the math into the code to be accurate. I feel this is a reasonable assumption for the purposes of this project, but perhaps a real-world project would require more accuracy (perhaps using a BigQuotient data type, having an integer numerator and denominator that can grow aritrarily large).
 
-Thus, if a calculation ever requires rounding, I'll round HALF_UP to the nearest 0.0001 minitoco.
+Thus, if a calculation ever requires rounding, I'll round HALF_UP to the nearest 0.0001 minitoco, but I'll try to avoid such calculations.
 
 ### The server is authoritative at all times
 
@@ -132,7 +122,6 @@ Unfortunately, however, a fully working online/offline system is pretty difficul
 
 When signing up for a web service, users should be forced to verify their identity in some way. Most systems use some sort of email/phone text verification system through a service like SendGrid or Twilio. While I will be implementing a system wherein users can log in, I will not implement the user verification system in order to limit scope.
 
-
 ## Approach
 
 ### Data Objects
@@ -140,15 +129,21 @@ When signing up for a web service, users should be forced to verify their identi
 Valuing consistency over verbosity, all data objects will:
 1. Have private constructors
 2. Be constructable via named static function
-3. Use builder pattern to be constructed
+3. Use the builder pattern to be constructed via a fluent interface
 
-With Github Copilot, the overhead in doing this is not hard, and copilot is often capable of figuring out the code you want to write. This greatly reduces the effort behind the approach above. In addition to the consistency and code generation benefits, the class itself operates as its own static factory.
+With Github Copilot, the overhead in doing this is not lessened, and copilot is often capable of figuring out the code you want to write. This greatly reduces the effort behind the approach above. In addition to the consistency and code generation benefits, the class itself operates as its own static factory. 
 
-Finally, all properties will be readonly. Fluent interfaces like this are very prescriptive on how objects are created, which should make object creation very readable, if more verbose. I realize that this choice could be controversial, however, better this than complete lack of consistency or approach.
+Fluent interfaces like this are very prescriptive on how objects are created, which should make object creation very readable, if more verbose. I do not blame anyone who chooses a different approach than I chose because I appreciate the benfits of conciseness as well. However, it's easier for a developer to develop a project which is internally consistnet than one that follows multiple different approaches.
+
+Finally, all properties of data objects (not builders) will be `readonly`. One must make a modification to a (deep) copy of the object as opposed to updating the value of a property. Typically, this approach is best in a multithreaded environment to avoid thread ownership issues. In our case, however, we are choosing to give ourselves the guarantee that an object created by one component (say, the TransactionService) is the exact same as an object after it has been passed to another component (say, the TransactionController).
 
 ### I/O Objects are not Database Objects
 
 I/O objects are intended to serve as view models for the views provided by the client application. However, there is no reason why the views of the application should be tied to the database schema. In fact, it is healthy to separate the I/O models from the database models (even though Prisma has a great generator of the database models). This approach better facilitates server-client communications and enables the client to change without affecting the backing data schema.
 
 ### Separation of implementation from interface
+
+It may seem silly to some to have only one implementation of an interface. Why not just create a class? When injecting dependencies (such as the [UserController](src/controllers/UserController.ts)'s dependency upon the [IPasswordService](src/services/IPasswordService.ts), [ITokenService](src/services/ITokenService.ts), and [IUserService](src/services/IUserService.ts)), it's easy to provide a substitute for an interface. It's often difficult to provide a substitute for a class. A great example of this is the [ITokenService](src/services/ITokenService.ts). The [JWTTokenService](src/services/JWTTokenService.ts) relies upon reading files that must be in a particular location. In production, this works fine, but when testing, this both adds overhead and reduces control over your tests of the [UserController](src/controllers/UserController.ts).
+
+To solve this issue, we separate the implementation and interface of the token service and make all consumers depend upon the interface instead of the impliementation.
 
