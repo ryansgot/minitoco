@@ -60,6 +60,9 @@ The following process takes a few minutes--especially on an older device. Homebr
     ```
 You should now have the minitoco service running at localhost:3050. If you don't want to block your terminal, use the `-d` option. However, I like to block that terminal window and run another terminal.
 
+> *Note*
+> As an alternative to either hyperkit or qemu, you may also use Docker Desktop.
+
 # Automatically detecting changes
 
 The docker container runs nodemon in the development environment that monitors any change you make to the [src](src/) directory. Any change that you save in that directory will cause your service to get restarted.
@@ -102,11 +105,9 @@ We use the dotenv npm package for reading our environment variables.
 
 As is the case with many projects, you have to make assumptions and pick a direction to start moving. The following assumptions were made:
 
-### The minimal unit of a toco is 0.0001 (a minitoco)
+### Integer operations
 
-Why did I choose this? I looked at total number of dollars in circulation. As of Dec. 2022, it was $2.3 trillion. The BIGINT data type in postgress stores this range: -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807, and thus, is sufficient for most transactions we might do. I wanted to choose a type with a width that was big enough to store a reasonable amount of toco as an integer so that the database could do math without having to use string and then deserialize to a Big and write the math into the code to be accurate. I feel this is a reasonable assumption for the purposes of this project, but perhaps a real-world project would require more accuracy (perhaps using a BigQuotient data type, having an integer numerator and denominator that can grow aritrarily large).
-
-Thus, if a calculation ever requires rounding, I'll round HALF_UP to the nearest 0.0001 minitoco, but I'll try to avoid such calculations.
+I looked at total number of dollars in circulation. As of Dec. 2022, it was $2.3 trillion. The BIGINT data type in postgres stores this range: -9,223,372,036,854,775,808 to +9,223,372,036,854,775,807, and the `bigint` data type max is 2^53 - 1. So BIGINT should be sufficient for most transactions we might do. I wanted to choose a type with a width that was big enough to store a reasonable amount of minitocos as an integer so that the database could do math in the database, should we need to. I feel this is a reasonable assumption for the purposes of this project, but perhaps a real-world project would require more accuracy (perhaps by way of an arbitrary-sized floating point decimal or a quotient with an arbitrary sized integer numerator and denominator)
 
 ### The server is authoritative at all times
 
@@ -121,6 +122,10 @@ Unfortunately, however, a fully working online/offline system is pretty difficul
 ### Email verification is unnecessary.
 
 When signing up for a web service, users should be forced to verify their identity in some way. Most systems use some sort of email/phone text verification system through a service like SendGrid or Twilio. While I will be implementing a system wherein users can log in, I will not implement the user verification system in order to limit scope.
+
+### Minitocos may be transferred--not bought or sold.
+
+The task said to enable buying/selling tocos. However, there's not really much of a point in adding another endpoint that can increase the amount of tocos in the users balance (in that it doesn't show anything different from the rest of the app). For brevity, I've omitted the buying/selling of minitocos and opted to just have every user start with 1000 minitocos. Thus, for the sake of simplicity, creation of minitocos comes down to creation of the users.
 
 ## Approach
 
@@ -141,9 +146,21 @@ Finally, all properties of data objects (not builders) will be `readonly`. One m
 
 I/O objects are intended to serve as view models for the views provided by the client application. However, there is no reason why the views of the application should be tied to the database schema. In fact, it is healthy to separate the I/O models from the database models (even though Prisma has a great generator of the database models). This approach better facilitates server-client communications and enables the client to change without affecting the backing data schema.
 
+### Constraints imposed by the database
+
+The biggest constraint in the project is that the user's balance of tocos should never be below zero. This constraint is enforced by the database so that attempting to create a transaction that would lead to a negative balance will always fail. Implementing this constraint in the server application is error-prone.
+
 ### Separation of implementation from interface
 
 It may seem silly to some to have only one implementation of an interface. Why not just create a class? When injecting dependencies (such as the [UserController](src/controllers/UserController.ts)'s dependency upon the [IPasswordService](src/services/IPasswordService.ts), [ITokenService](src/services/ITokenService.ts), and [IUserService](src/services/IUserService.ts)), it's easy to provide a substitute for an interface. It's often difficult to provide a substitute for a class. A great example of this is the [ITokenService](src/services/ITokenService.ts). The [JWTTokenService](src/services/JWTTokenService.ts) relies upon reading files that must be in a particular location. In production, this works fine, but when testing, this both adds overhead and reduces control over your tests of the [UserController](src/controllers/UserController.ts).
 
 To solve this issue, we separate the implementation and interface of the token service and make all consumers depend upon the interface instead of the impliementation.
 
+### Users will not know the ID of the recipients, but they will know the email address
+
+This may be controversial, but in order for users to transfer minitocos, they have to know something about the end user. In absence of a QR code mechanism or some other way to communicate a user's UUID, the end user will find it difficult to send minitocos to another user. Since the app has been simplified to the point of user input instead of some other, more reliable mechanism, I've opted for the user communicating the destination of their tocos via email address.
+
+### Showing the list of previous transactions is important
+
+The three endpoints given in the instructions are not really enough to be useful. A user need not only know the balance of tocos, the user
+needs to know the previous transactions. This list could get long in practice and should include pagination. For simplicity, I'll leave out pagination.

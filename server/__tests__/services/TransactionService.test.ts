@@ -114,7 +114,11 @@ describe("Transaction Service", () => {
             amount: input_amount,
             from_user_id: input_from_user_id,
             to_user_id: input_to_user_id,
-            created_at: expected_transaction_date
+            created_at: expected_transaction_date,
+            to_user: {
+              email: "receiver@example.com",
+              id: input_to_user_id
+            }
           });
   
           await service_under_test.createTransaction(input_amount, input_from_user_id, input_to_user_id);
@@ -129,13 +133,48 @@ describe("Transaction Service", () => {
                 MiniTocoTransactionBuilder.create()
                   .amount(input_amount)
                   .fromUserId(input_from_user_id)
-                  .toUserId(input_to_user_id)
+                  .toUserEmail("receiver@example.com")
                   .id(expected_transaction_id)
                   .date(expected_transaction_date)
                   .build()
               ).build()
           );
         });
+    });
+  });
+
+  describe("retrieveTransactions", () => {
+  
+    describe("Success", () => {
+      it("should retrieve the transactions for the given user", async () => {
+        const input_user_id = uuidv4();
+        const expected_transaction_id = uuidv4();
+        const expected_transaction_date = new Date();
+        mock_prisma_context.prisma.transaction.findMany.mockResolvedValue(
+          [
+            {
+              id: expected_transaction_id,
+              amount: BigInt(1),
+              from_user_id: input_user_id,
+              to_user_id: input_user_id,
+              created_at: expected_transaction_date,
+              to_user: {
+                email: input_user_id
+              }
+            }
+          ]
+        );
+        const actual = await service_under_test.retrieveTransactions(input_user_id);
+        expect(actual).toEqual([
+          MiniTocoTransactionBuilder.create()
+            .amount(BigInt(1))
+            .fromUserId(input_user_id)
+            .toUserEmail(input_user_id)
+            .id(expected_transaction_id)
+            .date(expected_transaction_date)
+            .build()
+        ]);
+      });
     });
   });
 });

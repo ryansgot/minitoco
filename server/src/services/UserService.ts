@@ -26,7 +26,7 @@ class UserService implements IUserService {
     try {
       const created_user = await this.prisma_context.prisma.user.create({
         data: {
-          email: user.email,
+          email: user.email.toLowerCase(),
           pw_hash: pw_hash,
           first_name: user.first_name,
           last_name: user.last_name,
@@ -65,7 +65,7 @@ class UserService implements IUserService {
     try {
       const user_and_balance = await this.prisma_context.prisma.user.findUnique({
         where: {
-          email: email
+          email: email.toLowerCase()
         },
         include: {
           balance: true

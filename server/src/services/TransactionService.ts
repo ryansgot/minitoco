@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { MiniTocoTransactionBuilder, MiniTocoTransactionResult, MiniTocoTransactionResultBuilder } from "../io_models/MiniTocoTransaction";
+import { MiniTocoTransaction, MiniTocoTransactionBuilder, MiniTocoTransactionResult, MiniTocoTransactionResultBuilder } from "../io_models/MiniTocoTransaction";
 import { PrismaContext } from "../prisma/PrismaDb"
-import { fieldNameOfForeignKeyConstraintError, isPrismaForeignKeyConstraintError, isPrismaRecordNotFoundError } from "../prisma/prisma_util";
+import { isPrismaRecordNotFoundError } from "../prisma/prisma_util";
 import { ITransactionService, TransactionInsufficientFundsError } from "./ITransactionService"
 import { UserIDNotFoundError } from "./IUserService";
 
@@ -13,6 +13,39 @@ class TransactionService implements ITransactionService {
 
   constructor(prisma_context: PrismaContext) {
     this.prisma_context = prisma_context;
+  }
+
+  async retrieveTransactions(from_user_id: string): Promise<Array<MiniTocoTransaction>> {
+    try {
+      const db_transactions = await this.prisma_context.prisma.transaction.findMany(
+        {
+          where: {
+            from_user_id: from_user_id
+          },
+          include: {
+            to_user: true
+          },
+          orderBy: {
+            created_at: "desc"
+          }
+        }
+      );
+
+      const builder = MiniTocoTransactionBuilder.create();
+      const ret = db_transactions.map((db_transaction) => {
+        builder.amount(db_transaction.amount);
+        builder.fromUserId(db_transaction.from_user_id);
+        builder.toUserEmail(db_transaction.to_user.email);
+        builder.id(db_transaction.id);
+        builder.date(db_transaction.created_at);
+        return builder.build();
+      });
+      return ret;
+    } catch (error) {
+      // Unexpected error, log and rethrow
+      logTransactionService("retrieveTransactions", "Error retrieving transactions", error);
+      throw error;
+    }
   }
   
   async createTransaction(amount: bigint, from_user_id: string, to_user_id: string): Promise<MiniTocoTransactionResult> {
@@ -55,14 +88,17 @@ class TransactionService implements ITransactionService {
               amount: amount,
               from_user_id: from_user_id,
               to_user_id: to_user_id
+            },
+            include: {
+              to_user: true
             }
           }
         );
 
         const transaction_builder = MiniTocoTransactionBuilder.create();
-        transaction_builder.amount(amount);
-        transaction_builder.fromUserId(from_user_id);
-        transaction_builder.toUserId(to_user_id);
+        transaction_builder.amount(db_transaction.amount);
+        transaction_builder.fromUserId(db_transaction.from_user_id);
+        transaction_builder.toUserEmail(db_transaction.to_user.email);
         transaction_builder.id(db_transaction.id);
         transaction_builder.date(db_transaction.created_at);
         const transaction = transaction_builder.build()

@@ -45,6 +45,7 @@ export class TransactionControllerBuilder extends BaseControllerBuilder<ITransac
 }
 
 export interface ITransactionController extends IBaseController {
+  fetchTransactions(signalComplete: () => void): void;
   createTransaction(signalComplete: () => void): void;
 }
 
@@ -114,6 +115,23 @@ class TransactionController extends BaseController implements ITransactionContro
         sendAndSignal(res, 404, MiniTocoError.errorsBody(error_to_return), signalComplete);
         return;
       }
+      sendAndSignalInternalServerError(res, signalComplete);
+    }
+  }
+
+  async fetchTransactions(signalComplete: () => void): Promise<void> {
+    if (this.validationFailureWasSent(signalComplete)) {
+      return;
+    }
+
+    const res: Response = this.res;
+    const req: Request = this.req;
+    const requester: RequestAuthUser = this.req.user as RequestAuthUser // <-- validator guarantees this exists.
+    try {
+      const transactions = await this.transaction_service.retrieveTransactions(requester.id);
+      sendAndSignal(res, 200, transactions, signalComplete);
+    } catch (error) {
+      logTransactionEndpointError("fetchTransactions", error as Error);
       sendAndSignalInternalServerError(res, signalComplete);
     }
   }

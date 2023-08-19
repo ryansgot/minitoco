@@ -2,6 +2,7 @@ import { MiniTocoTransaction, MiniTocoTransactionResult } from "../io_models/Min
 
 export interface ITransactionService {
   createTransaction(amount: bigint, from_user_id: string, to_user_id: string): Promise<MiniTocoTransactionResult>;
+  retrieveTransactions(from_user_id: string): Promise<Array<MiniTocoTransaction>>;
 }
 
 export class TransactionInsufficientFundsError extends Error {

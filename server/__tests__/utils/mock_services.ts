@@ -3,7 +3,7 @@ import { IUserService } from '../../src/services/IUserService';
 import { ITokenService } from '../../src/services/ITokenService';
 import { IPasswordService } from '../../src/services/IPasswordService';
 import { TokenData } from '../../src/io_models/TokenData';
-import { MiniTocoTransactionResult } from '../../src/io_models/MiniTocoTransaction';
+import { MiniTocoTransaction, MiniTocoTransactionResult } from '../../src/io_models/MiniTocoTransaction';
 import { ITransactionService } from '../../src/services/ITransactionService';
 
 export class MockUserServiceBuilder {
@@ -141,6 +141,7 @@ export class MockPasswordServiceBuilder {
 export class MockTransactionServiceBuilder {
       
   private create_transaction_response: MiniTocoTransactionResult | Error;
+  private retrieve_transactions_response: Array<MiniTocoTransaction> | Error;
 
   static create(): MockTransactionServiceBuilder {
     return new MockTransactionServiceBuilder();
@@ -152,16 +153,27 @@ export class MockTransactionServiceBuilder {
     this.create_transaction_response = create_transaction_response;
     return this;
   }
+  retrieveTransactions(retrieve_transactions_response: Array<MiniTocoTransaction> | Error): MockTransactionServiceBuilder {
+    this.retrieve_transactions_response = retrieve_transactions_response;
+    return this;
+  }
   
   build(): ITransactionService {
     const create_transaction_mock = jest.fn();
+    const retrieve_transactions_mock = jest.fn();
     return <ITransactionService> {
       create_transaction_mock: create_transaction_mock,
+      retrieve_transactions_mock: retrieve_transactions_mock,
       createTransaction: this.create_transaction_response === undefined
         ? create_transaction_mock.mockRejectedValue(new Error("createTransaction not mocked"))
         : this.create_transaction_response instanceof Error
         ? create_transaction_mock.mockRejectedValue(this.create_transaction_response)
-        : create_transaction_mock.mockResolvedValue(this.create_transaction_response)
+        : create_transaction_mock.mockResolvedValue(this.create_transaction_response),
+      retrieveTransactions: this.retrieve_transactions_response === undefined
+        ? retrieve_transactions_mock.mockRejectedValue(new Error("retrieveTransactions not mocked"))
+        : this.retrieve_transactions_response instanceof Error
+        ? retrieve_transactions_mock.mockRejectedValue(this.retrieve_transactions_response)
+        : retrieve_transactions_mock.mockResolvedValue(this.retrieve_transactions_response)
     };
   }
 }

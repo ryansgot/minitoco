@@ -197,7 +197,7 @@ describe("createTransaction", () => {
           MiniTocoTransactionBuilder.create()
             .amount(amount)
             .fromUserId(sender_user_id)
-            .toUserId(receiver_user_detail.user.id)
+            .toUserEmail(receiver_email)
             .id(uuidv4())
             .date(new Date())
             .build()
