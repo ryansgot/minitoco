@@ -1,5 +1,4 @@
 import { Component } from "react";
-import { Navigate } from "react-router-dom";
 import UserService from "../services/user.service";
 import TransactionService from "../services/transaction.service";
 import { MiniTocoUserDetail } from "../io_models/MiniTocoUser";
@@ -64,13 +63,13 @@ export default class Profile extends Component<Props, State> {
         window.location.reload();
       },
       error => {
-        const resMessage =
-          (error.response &&
-            error.response.data &&
-            error.response.data.message) ||
-          error.message ||
-          error.toString();
-
+        console.log("error", error);
+        let resMessage: string;
+        try {
+          resMessage = error.response.data.errors[0].msg;
+        } catch(err) {
+          resMessage = error.toString();
+        }
         this.setState({
           loading: false,
           message: resMessage
@@ -161,29 +160,3 @@ export default class Profile extends Component<Props, State> {
     );
   }
 }
-
-/*
-        <div className="container">
-          {currentUser ?
-            <div>
-              <header className="jumbotron">
-                <h3>
-                  <strong>{currentUser.user.first_name} {currentUser.user.last_name}</strong>
-                </h3>
-              </header>
-              <p>
-                <strong>Balance:</strong>{" "}
-                {currentUser.balance.value.toString()} minitocos{" "}, updated: 
-                {currentUser.balance.updated_at.toString()}
-              </p>
-              <p>
-                <strong>Id:</strong>{" "}
-                {currentUser.user.id}
-              </p>
-              <p>
-                <strong>Email:</strong>{" "}
-                {currentUser.user.email}
-              </p>
-            </div> : null}
-        </div>
-        */

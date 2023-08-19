@@ -87,12 +87,12 @@ export default class Register extends Component<Props, State> {
         });
       },
       error => {
-        const resMessage =
-          (error.response &&
-            error.response.data &&
-            error.response.data.message) ||
-          error.message ||
-          error.toString();
+        let resMessage: string;
+        try {
+          resMessage = error.response.data.errors[0].msg;
+        } catch(err) {
+          resMessage = error.toString();
+        }
 
         this.setState({
           successful: false,
@@ -115,12 +115,6 @@ export default class Register extends Component<Props, State> {
     return (
       <div className="col-md-12">
         <div className="card card-container">
-          <img
-            src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
-            alt="profile-img"
-            className="profile-img-card"
-          />
-
           <Formik
             initialValues={initialValues}
             validationSchema={this.validationSchema}
