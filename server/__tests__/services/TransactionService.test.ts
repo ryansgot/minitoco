@@ -91,7 +91,7 @@ describe("Transaction Service", () => {
 
     describe("Success", () => {
         
-        it("should create a user with the given data", async () => {
+        it("should create the transaction with the given data", async () => {
           const input_from_user_id = uuidv4();
           const input_to_user_id = uuidv4();
           const input_amount = BigInt(1);
@@ -115,9 +115,11 @@ describe("Transaction Service", () => {
             from_user_id: input_from_user_id,
             to_user_id: input_to_user_id,
             created_at: expected_transaction_date,
+            from_user: {
+              email: "sender@example.com"
+            },
             to_user: {
-              email: "receiver@example.com",
-              id: input_to_user_id
+              email: "receiver@example.com"
             }
           });
   
@@ -133,6 +135,8 @@ describe("Transaction Service", () => {
                 MiniTocoTransactionBuilder.create()
                   .amount(input_amount)
                   .fromUserId(input_from_user_id)
+                  .fromUserEmail("sender@example.com")
+                  .toUserId(input_to_user_id)
                   .toUserEmail("receiver@example.com")
                   .id(expected_transaction_id)
                   .date(expected_transaction_date)
@@ -148,6 +152,7 @@ describe("Transaction Service", () => {
     describe("Success", () => {
       it("should retrieve the transactions for the given user", async () => {
         const input_user_id = uuidv4();
+        const to_user_id = uuidv4();
         const expected_transaction_id = uuidv4();
         const expected_transaction_date = new Date();
         mock_prisma_context.prisma.transaction.findMany.mockResolvedValue(
@@ -160,6 +165,9 @@ describe("Transaction Service", () => {
               created_at: expected_transaction_date,
               to_user: {
                 email: input_user_id
+              },
+              from_user: {
+                email: "sender@example.com"
               }
             }
           ]
@@ -169,6 +177,8 @@ describe("Transaction Service", () => {
           MiniTocoTransactionBuilder.create()
             .amount(BigInt(1))
             .fromUserId(input_user_id)
+            .fromUserEmail("sender@example.com")
+            .toUserId(input_user_id)
             .toUserEmail(input_user_id)
             .id(expected_transaction_id)
             .date(expected_transaction_date)

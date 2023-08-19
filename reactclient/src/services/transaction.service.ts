@@ -1,18 +1,33 @@
 import axios from "axios";
 import tokenData from "./token.data";
-import { MiniTocoTransactionResult } from "../io_models/MiniTocoTransaction";
+import { MiniTocoTransaction, MiniTocoTransactionResult } from "../io_models/MiniTocoTransaction";
 
 // TODO: read from environment
 const API_URL = "http://localhost:3050/transactions/";
 
 class TransactionService {
-  async createTransaction(amount: bigint, to_user_email: string): Promise<MiniTocoTransactionResult | undefined> {
+  async getTransactionHistory(): Promise<Array<MiniTocoTransaction> | undefined> {
     const token_data = tokenData()
     if (token_data === undefined) {
       return undefined;
     }
 
-    console.log("Sending transaction", amount, to_user_email, token_data.access_token);
+    const options = {
+      method: 'GET',
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token_data.access_token}`
+      },
+      url: API_URL
+    }
+    const transactions = await axios(options);
+    return transactions.data;
+  }
+  async createTransaction(amount: bigint, to_user_email: string): Promise<MiniTocoTransactionResult | undefined> {
+    const token_data = tokenData()
+    if (token_data === undefined) {
+      return undefined;
+    }
 
     const options = {
       method: 'POST',
@@ -26,8 +41,8 @@ class TransactionService {
       },
       url: API_URL
     }
-    const transaction: MiniTocoTransactionResult = await axios(options);
-    return transaction;
+    const transaction = await axios(options);
+    return transaction.data;
   }
 }
 

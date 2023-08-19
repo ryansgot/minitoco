@@ -30,7 +30,7 @@ export const transaction_router: Router = express.Router();
  *       type: object
  *       required:
  *         - id
- *         - to_user_id
+ *         - to_user_email
  *         - from_user_id
  *         - amount
  *       properties:
@@ -38,10 +38,10 @@ export const transaction_router: Router = express.Router();
  *           type: string
  *           format: uuid
  *           description: The ID of the transaction
- *         to_user_id:
+ *         to_user_email:
  *           type: string
- *           format: uuid
- *           description: the ID of the user to whom the tocos were sent
+ *           format: email
+ *           description: the email address of the user to whom the funds were sent
  *         amount:
  *           type: string
  *           description: The amount of the transaction, serialized as a string to avoid precision loss.
@@ -84,16 +84,28 @@ export const transaction_router: Router = express.Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               description: The result of the transaction, including the transaction itself and the final balance of the sender
- *               items:
- *                 $ref: '#/components/schemas/MiniTocoTransactionResult'
+ *               $ref: '#/components/schemas/MiniTocoTransactionResult'
+ *                 
  *       400:
  *         description: invalid input or an attempt to send tocos to oneself
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/MiniTocoErrors'
+ *       401:
+ *         description: Login required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - errors
+ *               properties:
+ *                 errors:
+ *                   description: the array of errors that were encountered
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MiniTocoErrors'
  *       409:
  *         description: Insufficient tocos to send
  *         content:
@@ -133,6 +145,48 @@ transaction_router.post(
     const controller: ITransactionController = standardTransactionController(req, res);
     controller.createTransaction(() => {
       console.log(`[POST:/transactions]: COMPLETE`);
+    });
+  }
+);
+
+/**
+ * @swagger
+ * /transactions:
+ *   get:
+ *     tags: [Transactions]
+ *     summary: Get the transactions sent/received by the logged-in user.
+ *     responses:
+ *       200:
+ *         description: 
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               description: The full list of transactions sent/received by the currently logged-in user.
+ *               items:
+ *                 $ref: '#/components/schemas/MiniTocoTransaction'
+ *       401:
+ *         description: Login required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - errors
+ *               properties:
+ *                 errors:
+ *                   description: the array of errors that were encountered
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MiniTocoErrors'
+ */
+transaction_router.get(
+  "/",
+  fsRyanAuthenticate, // <-- ensures user logged-in.
+  (req: Request, res: Response) => {
+    const controller: ITransactionController = standardTransactionController(req, res);
+    controller.fetchTransactions(() => {
+      console.log(`[GET:/transactions]: COMPLETE`);
     });
   }
 );

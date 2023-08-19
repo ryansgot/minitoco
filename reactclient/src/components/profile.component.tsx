@@ -4,6 +4,7 @@ import TransactionService from "../services/transaction.service";
 import { MiniTocoUserDetail } from "../io_models/MiniTocoUser";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import TransactionsList from "./transactionslist.component";
 
 type Props = {};
 
@@ -155,6 +156,8 @@ export default class Profile extends Component<Props, State> {
                 </Form>
               </Formik>
             </div>
+            <br />
+            <TransactionsList user_id={currentUser.user.id} />
           </div> : null}
       </div>
     );

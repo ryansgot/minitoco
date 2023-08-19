@@ -5,12 +5,7 @@ import { BasicMockResponse, MockRequestBuilder } from "../utils/express_util";
 import { baseTransactionControllerBuilder } from "../utils/controller_builders";
 import { MockTransactionServiceBuilder, MockUserServiceBuilder } from "../utils/mock_services";
 import { waitForControllerCompletion } from "../utils/async_utils";
-import { UserEmailNotFoundError } from "../../src/services/IUserService";
-import { MiniTocoError, MiniTocoErrorBuilder } from "../../src/io_models/MiniTocoError";
-import { MiniTocoUserBuilder, MiniTocoUserDetailBuilder } from "../../src/io_models/MiniTocoUser";
-import { MiniTocoBalanceBuilder } from "../../src/io_models/MiniTocoBalance";
-import { TransactionInsufficientFundsError } from "../../src/services/ITransactionService";
-import { MiniTocoTransaction, MiniTocoTransactionBuilder, MiniTocoTransactionResultBuilder } from "../../src/io_models/MiniTocoTransaction";
+import { MiniTocoTransaction, MiniTocoTransactionBuilder } from "../../src/io_models/MiniTocoTransaction";
 
 
 describe("createTransaction", () => {
@@ -62,14 +57,18 @@ describe("createTransaction", () => {
           .amount(BigInt(1))
           .date(new Date())
           .fromUserId(sender_user_id)
+          .fromUserEmail("sender@example.com")
           .id(uuidv4())
+          .toUserId(uuidv4())
           .toUserEmail(receiver_email)
           .build(),
         MiniTocoTransactionBuilder.create()
           .amount(BigInt(2))
           .date(new Date())
           .fromUserId(sender_user_id)
+          .fromUserEmail("sender@example.com")
           .id(uuidv4())
+          .toUserId(uuidv4())
           .toUserEmail(receiver_email)
           .build()
       ];
