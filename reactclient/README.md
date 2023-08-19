@@ -1,3 +1,6 @@
+
+DO NOT USE THIS AS AN EXAMPLE OF A GREAT CLIENT. IT STORES REFRESH TOKENS IN PLAIN TEXT IN THE BROWSER'S LOCAL STORAGE. DO NOT EVER DO THIS.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
