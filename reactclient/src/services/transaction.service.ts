@@ -1,5 +1,5 @@
 import axios from "axios";
-import tokenData from "./token.data";
+import { tokenData } from "./local.data";
 import { MiniTocoTransaction, MiniTocoTransactionResult } from "../io_models/MiniTocoTransaction";
 
 // TODO: read from environment

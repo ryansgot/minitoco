@@ -6,7 +6,9 @@ import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import TransactionsList from "./transactionslist.component";
 
-type Props = {};
+type Props = {
+  currentUserCallback(user: MiniTocoUserDetail): void
+};
 
 type State = {
   loading: boolean,
@@ -31,6 +33,8 @@ export default class Profile extends Component<Props, State> {
   async componentDidMount() {
     const current_user = await UserService.getCurrentUser();
     if (current_user) {
+      // THIS IS A BAD WAY TO MAKE THE TOP BAR CONTAIN THE CORRECT OPTIONS. WE REALLY SHOULD HAVE A GLOBAL STATE INSTEAD OF A CALLBACK.
+      this.props.currentUserCallback(current_user);
       this.setState({ 
         loading: false,
         currentUser: current_user,

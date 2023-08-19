@@ -2,7 +2,7 @@ import axios from "axios";
 import qs from "qs";
 import { TokenData } from "../io_models/TokenData";
 import { MiniTocoUserDetail } from "../io_models/MiniTocoUser";
-import tokenData from "./token.data";
+import { tokenData } from "./local.data";
 
 // TODO: read from environment
 const API_URL = "http://localhost:3050/users";
@@ -26,6 +26,7 @@ class UserService {
 
   logout() {
     localStorage.removeItem("token_data");
+    localStorage.removeItem("user_detail");
   }
 
   async register(email: string, first_name: string, last_name: string, password: string) {
@@ -50,8 +51,6 @@ class UserService {
     if (token_data === undefined) {
       return undefined;
     }
-
-    console.log("token_data", token_data);
     
     const options = {
       method: 'GET',

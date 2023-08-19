@@ -10,6 +10,7 @@ import Register from "./components/register.component";
 import Profile from "./components/profile.component";
 
 import EventBus from "./common/EventBus";
+import { localUser } from "./services/local.data";
 
 type Props = {};
 
@@ -21,6 +22,7 @@ class App extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.logOut = this.logOut.bind(this);
+    this.currentUserUpdated = this.currentUserUpdated.bind(this);
 
     this.state = {
       currentUser: undefined,
@@ -28,7 +30,7 @@ class App extends Component<Props, State> {
   }
 
   async componentDidMount() {
-    const user = await UserService.getCurrentUser();
+    const user = localUser();
 
     if (user) {
       this.setState({
@@ -47,6 +49,12 @@ class App extends Component<Props, State> {
     UserService.logout();
     this.setState({
       currentUser: undefined,
+    });
+  }
+
+  currentUserUpdated(user: MiniTocoUserDetail) {
+    this.setState({
+      currentUser: user,
     });
   }
 
@@ -103,7 +111,7 @@ class App extends Component<Props, State> {
             <Route path="/" element={<div>Home</div>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile currentUserCallback={this.currentUserUpdated}/>} />
           </Routes>
         </div>
       </div>
