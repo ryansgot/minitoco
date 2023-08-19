@@ -16,6 +16,7 @@ export interface IUserController extends IBaseController {
   logInUser(signalComplete: () => void): void;
   refreshToken(signalComplete: () => void): void;
   fetchUser(signalComplete: () => void): void;
+  me(signalComplete: () => void): void;
 }
 
 export class UserControllerBuilder extends BaseControllerBuilder<IUserController, UserControllerBuilder> {
@@ -266,8 +267,20 @@ class UserController extends BaseController implements IUserController {
       return;
     }
 
+    await this.me(signalComplete);
+  }
+
+  async me(signalComplete: () => void): Promise<void> {
+    if (this.validationFailureWasSent(signalComplete)) {
+      return;
+    }
+
+    const res: Response = this.res;
+    const req: Request = this.req;
+    const request_user: RequestAuthUser = req.user as RequestAuthUser // <-- validator guarantees this exists.
+
     try {
-      const user_detail = await this.user_service.findUserById(requested_user_id);
+      const user_detail = await this.user_service.findUserById(request_user.id);
       sendAndSignal(res, 200, user_detail, signalComplete);
     } catch (error) {
       if (error instanceof UserIDNotFoundError) {
@@ -275,7 +288,7 @@ class UserController extends BaseController implements IUserController {
         // logged in user is the requested user.
         const error_to_return = MiniTocoErrorBuilder.ofPath("user_id")
           .msg("User not found")
-          .value(requested_user_id)
+          .value(request_user.id)
           .build();
         sendAndSignal(res, 404, MiniTocoError.errorsBody(error_to_return), signalComplete);
         return;

@@ -389,6 +389,51 @@ user_router.post(
 
 /**
  * @swagger
+ * /users/me:
+ *   get:
+ *     tags: [Users]
+ *     summary: Returns the currently logged-in user
+ *     responses:
+ *       200:
+ *         description: The most up-to-date details about the user.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MiniTocoUserDetail'
+ *       400:
+ *         description: invalid input (the user_id must be a uuid)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MiniTocoErrors'
+ *       401:
+ *         description: You need to log in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - errors
+ *               properties:
+ *                 errors:
+ *                   description: the array of errors that were encountered
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/MiniTocoErrors'
+ */
+user_router.get(
+  "/me",
+  fsRyanAuthenticate,
+  (req: Request, res: Response) => {
+    const controller: IUserController = standardUserController(req, res);
+    controller.me(() => {
+      console.log(`[GET:/users/me]: COMPLETE`);
+    });
+  }
+)
+
+/**
+ * @swagger
  * /users/{user_id}:
  *   get:
  *     tags: [Users]
