@@ -1,6 +1,6 @@
 # minitoco Service
 
-Explain your service here.
+The minitoco service enables transactions to be made in minitocos between different users. You can sign up for the service and send tocos.
 
 # Development setup
 
@@ -8,6 +8,8 @@ Currently, I only have instructions for Mac OSX. If you want instructions for li
 
 > *Note*:
 > You DO NOT need to have npm installed to RUN the server. All the necessary NPM functions to run the service are handled in docker container, startup scripts, etc. This includes the database migration. I did this for people who just want to run the server--not develop it. In a real project, I would not run `npx prisma migrate dev` on every app invocation, however, since you'll just be running the server, I optimized for your usecase.
+
+If you want to do anything other than run the server, npm is required.
 
 ## Mac OSX
 The following process takes a few minutes--especially on an older device. Homebrew is required for these instructions to work. If you don't have homebrew, install that first.
@@ -97,7 +99,6 @@ There are four environment variables you can change:
 These environment variables (with the exception of DB_HOST) are used for each environment.
 
 We use the dotenv npm package for reading our environment variables.
-
 
 # How does it work?
 
